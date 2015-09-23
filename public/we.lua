@@ -1,4 +1,10 @@
-local baseUrl = "http://we.haun.guru";
+local baseUrl;
+
+if _WEBEDIT_ALTERNATE_BASE then
+  baseURL = _WEBEDIT_ALTERNATE_BASE;
+else
+  baseUrl = "http://we.haun.guru";
+end
 
 local commandEndpoint = baseUrl .. "/getcmd";
 local responseEndpoint = baseUrl .."/response";
