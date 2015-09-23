@@ -1,0 +1,253 @@
+body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.fill-page {
+    width: auto;
+    height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#page-container {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+#page-header {
+    background-color: darkgray;
+    height: 40px;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+    padding: 0 0;
+
+}
+
+#page-title {
+    color: black;
+    font-size: 21pt;
+    margin-top: 4px;
+    display:block;
+    margin-left: 10px;
+}
+
+#sidebar {
+    background-color: lightslategray;
+    width: 200px;
+    position: absolute;
+    top: 40px;
+    bottom: 0;
+    left: 0;
+    right: auto;
+}
+
+#main-container {
+    clear:right;
+    padding: 10px 10px;
+    overflow: auto;
+    position: absolute;
+    left: 200px;
+    top: 40px;
+    bottom: 0;
+    right: 0;
+
+}
+
+#file-info {
+    height: 20px;
+}
+
+#code-editor {
+    position:absolute;
+    top: 40px;
+    left: 10px;
+    right: 10px;
+    bottom: 40px;
+    width: auto;
+    height: auto;
+    min-height: 200px;
+}
+
+#actions {
+    position:absolute;
+    bottom: 0;
+    left: 10px;
+    right: 0;
+    height: 30px;
+}
+
+.loading {
+    background-color:lightgray;
+    text-align: center;
+    color: #444444;
+}
+
+.modal {
+    display: none;
+    background-color: rgba(0, 0, 0, 0.59);
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.modal-active {
+    display: block;
+}
+
+.modal-content {
+    display: inline-block;
+    background-color: white;
+    width: 400px;
+    height: 200px;
+    margin-top: 50px;
+}
+
+#login-title {
+    font-size: 21px;
+    margin-top: 20px;
+    display: inline-block;
+}
+
+#login-key {
+    margin: 15px 0;
+    font-size: 21px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+#login-submit {
+    font-size: 21px;
+}
+
+#login-install {
+    display: block;
+    text-align: right;
+    margin-top: 30px;
+    width: 390px;
+}
+
+/*** N O T I F I C A T I O N S ***/
+
+#notifications {
+    position:absolute;
+    right: 5px;
+    top: 5px;
+    width: 350px;
+    margin: 0;
+    z-index: 99;
+    background-color: transparent;
+    list-style-type: none;
+    padding:0;
+}
+
+.notification {
+    background-color: white;
+    margin-bottom: 5px;
+    -webkit-box-shadow: 2px 2px 4px black;
+    -moz-box-shadow: 2px 2px 4px black;
+    box-shadow: 2px 2px 4px black;
+}
+
+
+.notification .notify-content {
+    background-color: white;
+    margin: 4px 4px 4px 20px;
+    border-radius: 4px;
+    padding: 7px;
+}
+
+
+.notification .notify-title {
+    font-size: 16pt;
+    border-bottom: 1px black solid;
+}
+
+.notification .notify-text {
+    padding-left: 10px;
+}
+
+.notify-error{
+    border: 3px solid red;
+    border-radius: 6px;
+    background-color: red;
+}
+
+.notify-error::before {
+    display:block;
+    width: 20px;
+    min-height: 50px;
+    color: white;
+    font-size: 20pt;
+    content: "!";
+    margin-left: 4px;
+    margin-top: 3px;
+    float:left;
+}
+
+.notify-info{
+    border: 3px solid blue;
+    border-radius: 6px;
+    background-color: blue;
+}
+
+.notify-info::before {
+    display:block;
+    width: 20px;
+    min-height: 50px;
+    color: white;
+    font-size: 20pt;
+    content: "i";
+    margin-left: 4px;
+    margin-top: 3px;
+    float:left;
+}
+
+/*** F I L E   T R E E ***/
+
+#file-tree-container {
+    padding:0;
+    margin:0;
+    border:0;
+    font-family: monospace;
+}
+
+#file-tree-container ul {
+    list-style-type: none;
+    padding:0;
+    margin:0;
+    border:0;
+}
+
+.tree-expand {
+    display:inline-block;
+    width:20px;
+    text-align:center;
+}
+
+.tree-dir-expand::before{
+    content:'+'
+}
+
+.tree-name {
+    display:inline-block;
+    width:100px;
+}
+
+.tree-size {
+    display:inline-block;
+    text-align:right;
+    /* Last element does not need a width */
+}
+
+.untitled-file {
+    color: gray;
+    font-style: italic;
+}

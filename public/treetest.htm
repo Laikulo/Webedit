@@ -1,0 +1,84 @@
+<html>
+<head>
+	<title>File Tree Test</title>
+
+	<style type=text/css>
+		.tree-expand {
+			width = 3em;
+		}
+		
+		.tree-expand-closed::before{
+			content: " + ";
+		}
+		.tree-expand-open::before {
+			content: " - ";
+		}
+	</style>
+	
+	<script type=text/javascript>
+		treeObj = 
+		[
+			{
+				name : "snap"
+			},
+			{
+				name : "crackle",
+				children : []
+			},
+			{
+				open : true,
+				name : "pop",
+				children : [
+					{
+						name:"foo"
+					}
+				]
+			}
+		]
+		
+		function drawTree(tree, elem){
+			elem.innerHTML = ""; //Clear the target element
+			for(var i=0; i< tree.length; i++) {
+				elem.appendChild(treeLi)
+			}
+		}
+		
+		function treeLi(treeItem){
+			var hasChildren = treeItem.hasOwnProperty("children");
+			var shouldDrawChildren = hasChildren && treeItem.hasOwnProperty("open") && (treeItem.open == true);
+			var listItem = document.createElement("LI");
+			
+			var expandDiv = document.createElement("DIV");
+			expandDiv.className = "tree-expand"
+			if(hasChildren){
+				if(shouldDrawChildren){
+					expandDiv.className += " tree-expand-open";
+					
+				}else{
+					expandDiv.className += " tree-expand-close";
+				}
+			}
+			listItem.appendChild(expandDiv);
+			
+			var nameDiv = document.createElement("DIV");
+			nameDiv.textContent = treeItem.name;
+			nameDiv.className = "tree-name"
+			listItem.appendChild(nameDiv);
+			
+			if(shouldDrawChildren){
+				var childrenUl = document.createElement("UL");
+				for(var i=0; i < treeItem.children.length; i++){
+					childrenUl.appendChild(treeLi(treeItem.children[i]));
+				}
+				listItem.appendChild(childrenUl);
+			}
+			return listItem;
+		}
+		
+	</script>
+</head>
+<body>
+	<ul id=target>
+	</ul>
+</body>
+</html>

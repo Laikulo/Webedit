@@ -1,0 +1,10 @@
+{
+  "name": "webedit-backend",
+  "version": "0.0.1",
+  "private": true,
+  "license": "NewBSD",
+  "bin": "./backend.js",
+  "dependencies": {
+    "express":"latest"
+  }
+}

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="webedit.css">
+    <title>Webedit</title>
+    <script type="text/javascript" src="ace/ace.js"></script> <!-- Awesome editor is Ace, by Cloud9 -->
+    <script type="text/javascript" src="webedit.js"></script> <!-- Webedit's own JS for interfacing with the backend -->
+    <!-- utility functions will be moved to own file later-->
+    <script type="text/javascript">
+        function addClass(el, cl) {
+            if(!(el.className === "")){
+                el.className += " ";
+            }
+            el.className += cl;
+        }
+
+        function removeClass(el,cl) {
+            el.className = el.className.replace(new RegExp("\\b" + cl + "\\b"),'').trim();
+        }
+
+        /**
+         * notifyTag
+         *
+         * generates a html div element representing a notification
+         *
+         * @param cls string The class of the notifiaciton
+         * @param title string The title of the notification
+         * @param msg string The message for the notification
+         * @returns Element a HTML element representing the notification
+         */
+        function notifyTag(cls, title, msg) {
+            'use strict';
+
+            var notifyDiv = document.createElement("DIV");
+            notifyDiv.className = "notification notify-" + cls;
+
+            var contentDiv = document.createElement("DIV");
+            contentDiv.className = "notify-content";
+
+            var titleDiv = document.createElement("DIV");
+            titleDiv.className = "notify-title";
+            titleDiv.textContent = title;
+
+            var messageDiv = document.createElement("DIV");
+            messageDiv.className = "notify-text";
+            messageDiv.textContent = msg;
+
+            contentDiv.appendChild(titleDiv);
+            contentDiv.appendChild(messageDiv);
+
+            notifyDiv.appendChild(contentDiv);
+            return notifyDiv;
+        }
+
+        /**
+         * notify
+         *
+         * displays a notification for a set time
+         *
+         * @param cls string the class of the notification
+         * @param title string the title for the notification
+         * @param msg string the message for the notification
+         * @param time integer time in milliseconds to display the notification
+         */
+        function notify(cls,title,msg,time){
+            var tag = notifyTag(cls,title,msg);
+            var notificationBox = document.getElementById("notifications");
+            notificationBox.appendChild(tag);
+            window.setTimeout(function () {
+                notificationBox.removeChild(tag);
+            },time);
+        }
+
+        function fileTreeTag(obj){
+            var out = document.createElement("UL");
+            out.className = "file-tree";
+
+            for(var entry in obj){
+                var theTag = document.createElement("LI");
+                theTag.appendChild(fileTag(entry, obj[entry]));
+                out.appendChild(theTag);
+            }
+
+            return out;
+        }
+
+        function fileTag(name, obj){
+            var out = document.createElement("DIV");
+            var expandDiv = document.createElement("SPAN");
+            expandDiv.className = "tree-expand";
+            var nameDiv = document.createElement("SPAN");
+            nameDiv.className = "tree-name";
+            var sizeDiv = document.createElement("SPAN");
+            sizeDiv.className = "tree-size";
+            nameDiv.textContent = name;
+            if(obj.dir){
+                addClass(expandDiv, "tree-dir-expand");
+                sizeDiv.textContent = "---";
+                addClass(out, "tree-dir");
+            }else{
+                addClass(out, "tree-file");
+                sizeDiv.textContent = obj.size;
+            }
+            out.appendChild(expandDiv);
+            out.appendChild(nameDiv);
+            out.appendChild(sizeDiv);
+            return out;
+        }
+
+        function showInstallModal(){
+            removeClass(document.getElementById("loginWindow"), "modal-active");
+            addClass(document.getElementById("installation"), "modal-active");
+        }
+
+        function closeInstallModal(){
+            removeClass(document.getElementById("installation"), "modal-active");
+            addClass(document.getElementById("loginWindow"),"modal-active");
+        }
+
+    </script>
+
+    <!-- page logic -->
+    <script type="text/javascript">
+        //Initialize icky globals
+        window.workFile = "";
+        window.hasOpenFile = false;
+        window.fileTree = {};
+
+        function loadHandler () {
+            'use strict';
+            if(!(window.location.hash.substr(1) === "nologin")) {
+                showLoginWindow();
+            }
+        }
+
+        function activateAce () {
+            'use strict';
+            window.aceEditor = ace.edit("code-editor");
+            window.aceEditor.setTheme("ace/theme/monokai");
+            window.aceEditor.getSession().setMode("ace/mode/lua");
+            window.aceEditor.setValue("");
+            window.aceEditor.setReadOnly("true");
+            removeClass(document.getElementById("code-editor"), "loading");
+        }
+
+        function showLoginWindow (){
+            'use strict';
+            var loginWindow = document.getElementById("loginWindow");
+            addClass(loginWindow,"modal-active");
+        }
+
+        function reloadFileTree() {
+            if(!hasSession()) return; //Don't even try if no attached client
+            var ft = document.getElementById("file-tree-container");
+            ft.innerHTML = "";
+            sendCommand({
+                action: "ls",
+                dir: ""
+            },
+            function (req,res) {
+                if(res.hasOwnProperty("err")){
+                    notify("error","Error","something bad happened while loading the file tree, check console for more details", 8000);
+                    console.log(res.err);
+                    return;
+                }
+                ft.appendChild(fileTreeTag(res.ls));
+            });
+        }
+
+        function processLogin() {
+            'use strict';
+            var key = document.getElementById("login-key").value;
+            if(connectWithKey(key)){
+                removeClass(document.getElementById("loginWindow"), "modal-active");
+                notify("info","Login Success", "You are now connected", 3000);
+                activateAce();
+                reloadFileTree();
+            }else{
+                notify("error","Login Failure", "Has the key already been used?", 8000);
+            }
+        }
+
+        function processLogout() {
+            'use strict';
+            if(!confirm("Are you sure you wish to logout?")) return;
+            sendCommand({
+                action:"exit"
+            },function(){});
+            clearSession();
+            removeEditor();
+            document.getElementById("login-key").value = ""; //Clear login box
+            showLoginWindow();
+            notify("info","Logout Complete","You have been logged out", 3000);
+        }
+
+        function processLoadButton() {
+            'use strict';
+            loadFileIntoEditor(prompt("Enter filename to load"));
+        }
+
+        function loadFileIntoEditor(path) {
+            'use strict';
+            sendCommand(
+                    {
+                        action: "cat",
+                        file: path
+                    },
+                    function (req, res) {
+                        if (res.hasOwnProperty("err")){
+                            notify("error", "ERROR", "Could not load file", 3000);
+                        }else {
+                            window.aceEditor.setValue(res.f);
+                            window.aceEditor.setReadOnly();
+                            removeClass(document.getElementById("file-info"), "untitled-file");
+                            document.getElementById("file-info").textContent = path;
+                            window.workFile = path;
+                            window.hasOpenFile = true;
+                        }
+                    }
+            )
+        }
+
+        function removeEditor(){
+            'use strict';
+            window.aceEditor.setValue("");
+            addClass(document.getElementById("file-info"), "untitled-file");
+            document.getElementById("file-info").textContent = "[Untitled File]";
+            window.workFile = "";
+            window.hasOpenFile = false;
+            window.aceEditor.destroy();
+            document.getElementById("code-editor").innerHTML = "";
+            document.getElementById("code-editor").className = "loading";
+        }
+
+        function processSaveButton() {
+            saveFileFromEditor(window.workFile === "" ? prompt("Enter filename to save as") : window.workFile);
+        }
+
+        function saveFileFromEditor(path) {
+            'use strict';
+            sendCommand(
+                    {
+                        action: "write",
+                        file: path,
+                        txt: window.aceEditor.getValue()
+                    },
+                    function (req,res) {
+                        if(res.hasOwnProperty("err")){
+                            notify("error", "ERROR", "Something bad happened while trying to save!", 5000);
+                            console.log(res.err);
+                        }else {
+                            notify("info", "Save Complete", "The file was successfully saved", 3000);
+                        }
+                    }
+            )
+        }
+
+    </script>
+</head>
+<body onload="loadHandler()">
+<div id="page-container" class="fill-page">
+<div id="page-header">
+    <span id="page-title">Computercraft Webedit v0.0.1</span>
+</div>
+<div id="sidebar">
+    <span class="coming-soon">File tree coming soon!</span>
+    <div id="file-tree-container">
+        <ul id="file-tree"></ul>
+    </div>
+</div>
+<div id="main-container" class="">
+    <div id="file-info" class="untitled-file">
+        [Untitled File]
+    </div>
+    <div id="code-editor" class="loading">
+        <br>
+        <br>
+        <br>
+        Loading...
+        <noscript>
+            <br>
+            <br>
+            <span style="color:red;">
+            Webedit requires Javascript in order to work!
+            </span>
+        </noscript>
+    </div>
+    <div id="actions">
+        <input type="button" value="save" id="save-button" class="action-button" onclick="processSaveButton();">
+        <input type="button" value="load" id="load-button" class="action-button" onclick="processLoadButton();">
+        <input type="button" value="Logout" id="logout-button" class="action-button" onclick="processLogout();">
+    </div>
+</div>
+</div>
+<div id="loginWindow" class="fill-page modal">
+    <div class="modal-content">
+        <label for="login-key" id="login-title">
+            Enter Key:
+        </label><br>
+        <input id="login-key" type="text" placeholder="Key" autocomplete="off"><br>
+        <input id="login-submit" type="button" value="Submit" onclick="processLogin()"><br>
+        <a id="login-install" class="modal-corner" href="#" onclick="showInstallModal();">
+            Installation Instructions
+        </a>
+    </div>
+</div>
+<div id="installation" class="fill-page modal">
+    <div class="modal-content" style="width:520px; height:150px;">
+        <div style="text-align:right;">
+            <input type="button" onclick="closeInstallModal()" value="Back">
+        </div>
+        <ol>
+            <li>At the command line, type "lua" and press enter</li>
+            <li>Paste the text below (using Ctrl-V), and press enter</li>
+            <li>Follow on-screen instructions</li>
+        </ol>
+        <pre>loadstring(http.get("http://we.haun.guru/i").readAll())()</pre>
+    </div>
+</div>
+<ul id="notifications">
+</ul>
+</body>
+</html>

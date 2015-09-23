@@ -1,0 +1,25 @@
+--loadstring(http.get("http://we.haun.guru/i").readAll())()
+local function doInstall()
+	local destfile = fs.open("webedit","w");
+	destfile.write(http.get("http://we.haun.guru/we.lua").readAll());
+	destfile.close();
+end
+
+
+print("webedit installer v0.0.1...");
+local stat, err = pcall(doInstall)
+if stat then
+		print("webedit has been installed successfully");
+		print("type \"webedit\" to begin!");
+	else
+		print("Webedit could not be installed!");
+		print(err);
+end
+
+-- Try to exit CC lua shell
+local callerEnv = getfenv(2);
+
+if callerEnv and callerEnv.exit then
+	callerEnv.exit();
+	print("[lua shell exiting]");
+end
