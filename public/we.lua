@@ -1,7 +1,8 @@
 local baseUrl;
 
 if _WEBEDIT_ALTERNATE_BASE then
-  baseURL = _WEBEDIT_ALTERNATE_BASE;
+  baseUrl = _WEBEDIT_ALTERNATE_BASE;
+  print("Using alternate base URL: " .. baseUrl)
 else
   baseUrl = "http://we.haun.guru";
 end

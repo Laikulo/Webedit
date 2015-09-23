@@ -76,9 +76,13 @@ function luaEncode(obj){
 
 
 Client.prototype.genKeys = function (){
-    this.clientId = genPrintableRandom(20);
+	do {	//Enforce uniqueness of client IDs
+		this.clientId = genPrintableRandom(20);
+	} while (clients.hasOwnProperty(this.clientId));
     this.clientKey = genPrintableRandom(10);
-    this.connectKey = genTypableRandom(4);
+	do {	//Enfoce uniqueness of activeated connection keys
+		this.connectKey = genTypableRandom(4);
+	} while (connectKeys.hasOwnProperty(this.connectKey));
 };
 
 Client.prototype.getId = function (){
