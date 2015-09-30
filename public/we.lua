@@ -231,7 +231,7 @@ function terminalBase.writeImpl(self,str)
 end
 
 
-local colorTable = {
+local colorTable = { ---This color table is used by the blit implementation
   ["0"] = colors.black,
   ["1"] = colors.blue,
   ["2"] = colors.green,
@@ -259,6 +259,65 @@ function terminalBase.blitImpl(self,tStr,fStr,bStr)
   end
 end
 
+function terminalBase.clearImpl(self)
+  --CC's clear fills with spaces, with BGcolor and fgcolor set
+  for y = 1, self.height do
+    for x = 1, self.width do
+      self.chars[y][x] = 32;
+      self.bgColors[y][x] = self.bgColor;
+      self.fgColors[y][x] = self.textColor;
+    end
+  end
+end
+
+function terminalBase.clearLineImpl(self)
+  for x = 1, self.width do
+    self.chars[self.yPos][x] = 32
+    self.bgColors[self.yPos][x] = self.bgColor
+    self.fgColors[self.yPos][x] = self.textColor
+  end
+end
+
+function terminalBase.getCursorPosImpl(self)
+  return self.xPos, self.yPos
+end
+
+function terminalBase.setCursorPosImpl(self,x,y)
+  self.xPos = x
+  self.yPos = y
+end
+
+function terminalBase.getSizeImpl(self)
+  return self.width, self.height
+end
+
+function terminalBase.scrollImpl(self,t)
+  error("terminal scroll is not yet implemented")
+end
+
+function terminalBase.redirectImpl(self,target)
+  error("terminal redirection is not yet implemented")
+end
+
+function terminalBase.nativeImpl(self)
+  error("the terminal native call is not supported")
+end
+
+function terminalBase.setTextColorImpl(self,color)
+  self.textColor = color
+end
+
+function terminalBase.getTextColorImpl(self)
+  return self.textColor
+end
+
+function terminalBase.setBackgroundColorImpl(self,color)
+  self.bgColor = color
+end
+
+function terminalBase.getBackgroundColorImpl(self)
+  return self.bgColor;
+end
 
 local function newTerminal()
   local terminal = {};
@@ -266,8 +325,8 @@ local function newTerminal()
   ---- Function shims ----
   terminal.write = function (str) terminal.writeImpl(terminal,str) end;
   terminal.blit = function (text,colors,bgcolors) terminal.blitImpl(terminal,text,colors,bgcolors) end;
-  terminal.clear = function () terinal.clearImpl(terminal) end;
-  terminal.clearLine = function () terinal.clearLineImpl(terminal) end;
+  terminal.clear = function () terminal.clearImpl(terminal) end;
+  terminal.clearLine = function () terminal.clearLineImpl(terminal) end;
   terminal.getCursorPos = function () return terminal.getCursorPosImpl(terminal) end;
   terminal.setCursorPos = function (x,y) terminal.setCursorPosImpl(terminal,x,y) end;
   terminal.isColor = function () return terminal.isColorImpl(terminal) end;
