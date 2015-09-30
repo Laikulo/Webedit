@@ -291,8 +291,34 @@ function terminalBase.getSizeImpl(self)
   return self.width, self.height
 end
 
-function terminalBase.scrollImpl(self,t)
-  error("terminal scroll is not yet implemented")
+function terminalBase.scrollImpl(self,n)
+  --Terminal scrolling does not touch cursor pos
+  error("Scrolling is not yet implemented")
+  local startAt,endAt,stepSize
+  if n < 0 then --this seems kind silly
+    startAt = self.height
+    endAt = 1
+    stepSize = -1
+  else
+    startAt = 1
+    endAt = self.height
+    stepSize = 1
+  end
+  for y = startAt,endAt,stepSize do
+    if y+n < 1 or y+n > self.height then -- there is no line to scroll to, so just nuke it
+      for x = 1,self.width do
+        term.chars[y][x] = 32
+        term.bgColors[y][x] = self.bgColor
+        term.fgColors[y][x] = self.textColor
+      end
+    else
+      for x = 1,self.width do
+        term.chars[y][x] = term.chars[y+n][x]
+        term.bgColors[y][x] = term.bgColors[y+n][x]
+        term.fgColors[y][x] = term.fgColors[y+n][x]
+      end
+    end
+  end
 end
 
 function terminalBase.redirectImpl(self,target)
@@ -300,7 +326,7 @@ function terminalBase.redirectImpl(self,target)
 end
 
 function terminalBase.nativeImpl(self)
-  error("the terminal native call is not supported")
+  return self
 end
 
 function terminalBase.setTextColorImpl(self,color)
