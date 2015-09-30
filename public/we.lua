@@ -194,33 +194,50 @@ local terminalBase = {
   bgColor = colors.black,
   textColor = colors.white,
   cursorBlink = false,
-  
 };
 
-local function newTerminal() {
+function terminalBase.setChar(self,x,y,c,fg,bg)
+  self.chars[y][x] = c;
+  self.fgColors[y][x] = fg;
+  self.bgColors[y][x] = bg;
+  if self.onCharUpdate then
+    self.onCharUpdate(self);
+  end
+end
+
+function terminalBase.writeImpl(self,str)
+  for i = 1, #str do
+    self.setChar(self,self.xPos,self.yPos,str[i],self.textColor,self.bgColor);
+    self.xPos = self.xPos + 1;
+  end
+end
+
+local function newTerminal()
   local terminal = {};
   setmetatable(terminal, terminalBase);
   ---- Function shims ----
-  terminal.write = function (str) {terminal.writeImpl(terminal,str)};
-  terminal.blit = function (text,colors,bgcolors) {terminal.blitImpl(terminal,text,colors,bgcolors)};
-  terminal.clear = function () {terinal.clearImpl(terminal)};
-  terminal.clearLine = function () {terinal.clearLineImpl(terminal)};
-  terminal.getCursorPos = function () {return terminal.getCursorPosImpl(terminal)};
-  terminal.setCursorPos = function (x,y) {terminal.setCursorPosImpl(terminal,x,y)};
-  terminal.isColor = function () {return terminal.isColorImpl(terminal)};
-  terminal.getSize = function () {return terminal.getSizeImpl(terminal)};
-  terminal.scroll = function (n) {terminal.scrollImpl(terminal,n)};
-  terminal.redirect = function (targetTerm) {return terminal.redirectImpl(targetTerm)};
-  terminal.current = function () {return terminal.currentImpl(terminal)};
-  terminal.native = function () {return terminal.nativeImpl(terminal)};
-  terminal.setTextColor = function (color) {terminal.setTextColorImpl(terminal,color)};
-  terminal.getTextColor = function () {return terminal.getTextColorImpl(terminal,color)};
-  terminal.setBackgroundColor = function (color) {terminal.setBackgroundColorImpl(terminal,color)};
-  terminal.getBackgroundColor = function () {return terminal.getBackgroundColorImpl(terminal)};
+  terminal.write = function (str) terminal.writeImpl(terminal,str) end;
+  terminal.blit = function (text,colors,bgcolors) terminal.blitImpl(terminal,text,colors,bgcolors) end;
+  terminal.clear = function () terinal.clearImpl(terminal) end;
+  terminal.clearLine = function () terinal.clearLineImpl(terminal) end;
+  terminal.getCursorPos = function () return terminal.getCursorPosImpl(terminal) end;
+  terminal.setCursorPos = function (x,y) terminal.setCursorPosImpl(terminal,x,y) end;
+  terminal.isColor = function () return terminal.isColorImpl(terminal) end;
+  terminal.getSize = function () return terminal.getSizeImpl(terminal) end;
+  terminal.scroll = function (n) terminal.scrollImpl(terminal,n) end;
+  terminal.redirect = function (targetTerm) return terminal.redirectImpl(targetTerm) end;
+  terminal.current = function () return terminal.currentImpl(terminal) end;
+  terminal.native = function () return terminal.nativeImpl(terminal) end;
+  terminal.setTextColor = function (color) terminal.setTextColorImpl(terminal,color) end;
+  terminal.getTextColor = function () return terminal.getTextColorImpl(terminal,color) end;
+  terminal.setBackgroundColor = function (color) terminal.setBackgroundColorImpl(terminal,color) end;
+  terminal.getBackgroundColor = function () return terminal.getBackgroundColorImpl(terminal) end;
   ---- Per-instace variables ----
-  terminal.lines = {};
+  terminal.chars = {};
+  terminal.fgColors = {};
+  terminal.bgColors = {};
   return terminal;
-}
+end
 
 ---- J S O N  F I X E S ----
 
@@ -264,7 +281,10 @@ local function setupJson()
   end
 end
 
-
-setupJson();
-getKeys();
-waitForCommand();
+if _WEBEDIT_DEBUG_SHELL then
+  os.run(_ENV, "rom/programs/lua");
+else
+  setupJson();
+  getKeys();
+  waitForCommand();
+end
