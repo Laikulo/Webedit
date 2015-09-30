@@ -205,12 +205,6 @@ function terminalBase.addChar(self, char, fgcolor, bgcolor)
   end
 end
 
-function terminalBase.writeImpl(self,str)
-  for i = 1, #str do
-    self.addChar(self,string.byte(string.sub(str,i,i)),self.textColor, self.bgColor)
-  end
-end
-
 function terminalBase.setSize(self,width,height)
   --Initialize a terminal to all spaces
   for y = 1, height do
@@ -220,7 +214,7 @@ function terminalBase.setSize(self,width,height)
     for x = 1, width do
       self.chars[y][x] = 32;
       self.bgColors[y][x] = colors.black;
-      self.bgColors[y][x] = colors.white;
+      self.fgColors[y][x] = colors.white;
     end
   end
   self.width = width;
@@ -229,6 +223,42 @@ function terminalBase.setSize(self,width,height)
   self.yPos = 1;
   --Terminal resize events are not yet supported
 end
+
+function terminalBase.writeImpl(self,str)
+  for i = 1, #str do
+    self.addChar(self,string.byte(string.sub(str,i,i)),self.textColor, self.bgColor)
+  end
+end
+
+
+local colorTable = {
+  ["0"] = colors.black,
+  ["1"] = colors.blue,
+  ["2"] = colors.green,
+  ["3"] = colors.cyan,
+  ["4"] = colors.red,
+  ["5"] = colors.purple,
+  ["6"] = colors.orange,
+  ["7"] = colors.lightGray,
+  ["8"] = colors.gray,
+  ["9"] = colors.lightBlue,
+  ["a"] = colors.lime,
+  ["b"] = colors.cyan, --Ummm no aqua?
+  ["c"] = colors.pink,
+  ["d"] = colors.magenta,
+  ["e"] = colors.yellow,
+  ["f"] = colors.white
+}
+
+function terminalBase.blitImpl(self,tStr,fStr,bStr)
+  for i = 1, #tStr do
+    self.addChar(self,
+      string.byte(string.sub(tStr,i,i)),
+      colorTable[string.sub(fStr,i,i)],
+      colorTable[string.sub(bStr,i,i)])
+  end
+end
+
 
 local function newTerminal()
   local terminal = {};
@@ -302,7 +332,8 @@ end
 local function startDebugShell()
   debugEnv = {
     newTerminal = newTerminal,
-    terminalBase = terminalBase
+    terminalBase = terminalBase,
+    colorTable = colorTable
   }
   os.run(debugEnv, "rom/programs/lua");
 end
