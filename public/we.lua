@@ -193,28 +193,46 @@ local terminalBase = {
   width = 10,
   bgColor = colors.black,
   textColor = colors.white,
-  cursorBlink = false,
+  cursorBlink = false
 };
 
-function terminalBase.setChar(self,x,y,c,fg,bg)
-  self.chars[y][x] = c;
-  self.fgColors[y][x] = fg;
-  self.bgColors[y][x] = bg;
-  if self.onCharUpdate then
-    self.onCharUpdate(self);
+function terminalBase.addChar(self, char, fgcolor, bgcolor)
+  if self.xPos <= self.width then
+    self.chars[self.yPos][self.xPos] = char;
+    self.fgColors[self.yPos][self.xPos] = fgcolor;
+    self.bgColors[self.yPos][self.xPos] = bgcolor;
+    self.xPos = self.xPos + 1;
   end
 end
 
 function terminalBase.writeImpl(self,str)
   for i = 1, #str do
-    self.setChar(self,self.xPos,self.yPos,str[i],self.textColor,self.bgColor);
-    self.xPos = self.xPos + 1;
+    self.addChar(self,string.byte(string.sub(str,i,i)),self.textColor, self.bgColor)
   end
+end
+
+function terminalBase.setSize(self,width,height)
+  --Initialize a terminal to all spaces
+  for y = 1, height do
+    self.chars[y] = {};
+    self.bgColors[y] = {};
+    self.fgColors[y] = {};
+    for x = 1, width do
+      self.chars[y][x] = 32;
+      self.bgColors[y][x] = colors.black;
+      self.bgColors[y][x] = colors.white;
+    end
+  end
+  self.width = width;
+  self.height = height;
+  self.xPos = 1;
+  self.yPos = 1;
+  --Terminal resize events are not yet supported
 end
 
 local function newTerminal()
   local terminal = {};
-  setmetatable(terminal, terminalBase);
+  setmetatable(terminal, {__index = terminalBase});
   ---- Function shims ----
   terminal.write = function (str) terminal.writeImpl(terminal,str) end;
   terminal.blit = function (text,colors,bgcolors) terminal.blitImpl(terminal,text,colors,bgcolors) end;
@@ -281,8 +299,16 @@ local function setupJson()
   end
 end
 
+local function startDebugShell()
+  debugEnv = {
+    newTerminal = newTerminal,
+    terminalBase = terminalBase
+  }
+  os.run(debugEnv, "rom/programs/lua");
+end
+
 if _WEBEDIT_DEBUG_SHELL then
-  os.run(_ENV, "rom/programs/lua");
+  startDebugShell();
 else
   setupJson();
   getKeys();
