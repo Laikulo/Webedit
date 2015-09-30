@@ -19,6 +19,14 @@ local commands = {};
 
 local toJSON;
 
+---- U T I L I T Y  F U N C T I O N S ----
+
+local function die(code,reason)
+  return {err = {code = code, reason = reason}};
+end
+
+---- S E R V E R  I N T E R A C T I O N ----
+
 local function getKeys()
   local httpresp = http.post(connectEndpoint,nil)
   if not httpresp then
@@ -30,10 +38,6 @@ local function getKeys()
   sessionId = rd.i;
   sessionKey = rd.k;
   connectKey = rd.c;
-end
-
-local function die(code,reason)
-  return {err = {code = code, reason = reason}};
 end
 
 local function sendCommandResponse(resp)
@@ -73,6 +77,8 @@ local function waitForCommand()
     end
   end
 end
+
+---- C O M M A N D S ----
 
 function commands.testError(call)
   error(call.e or "Test Error");
@@ -177,6 +183,46 @@ function commands.exit(call)
   print("Thank you for using webedit!");
   return false; --end
 end
+
+---- V I R T U A L  T E R M I N A L ----
+
+local terminalBase = {
+  xPos = 1,
+  yPos = 1,
+  height = 10,
+  width = 10,
+  bgColor = colors.black,
+  textColor = colors.white,
+  cursorBlink = false,
+  
+};
+
+local function newTerminal() {
+  local terminal = {};
+  setmetatable(terminal, terminalBase);
+  ---- Function shims ----
+  terminal.write = function (str) {terminal.writeImpl(terminal,str)};
+  terminal.blit = function (text,colors,bgcolors) {terminal.blitImpl(terminal,text,colors,bgcolors)};
+  terminal.clear = function () {terinal.clearImpl(terminal)};
+  terminal.clearLine = function () {terinal.clearLineImpl(terminal)};
+  terminal.getCursorPos = function () {return terminal.getCursorPosImpl(terminal)};
+  terminal.setCursorPos = function (x,y) {terminal.setCursorPosImpl(terminal,x,y)};
+  terminal.isColor = function () {return terminal.isColorImpl(terminal)};
+  terminal.getSize = function () {return terminal.getSizeImpl(terminal)};
+  terminal.scroll = function (n) {terminal.scrollImpl(terminal,n)};
+  terminal.redirect = function (targetTerm) {return terminal.redirectImpl(targetTerm)};
+  terminal.current = function () {return terminal.currentImpl(terminal)};
+  terminal.native = function () {return terminal.nativeImpl(terminal)};
+  terminal.setTextColor = function (color) {terminal.setTextColorImpl(terminal,color)};
+  terminal.getTextColor = function () {return terminal.getTextColorImpl(terminal,color)};
+  terminal.setBackgroundColor = function (color) {terminal.setBackgroundColorImpl(terminal,color)};
+  terminal.getBackgroundColor = function () {return terminal.getBackgroundColorImpl(terminal)};
+  ---- Per-instace variables ----
+  terminal.lines = {};
+  return terminal;
+}
+
+---- J S O N  F I X E S ----
 
 local function jsonReplaceWrapper(passfn,str,repl)
   return function (obj)
